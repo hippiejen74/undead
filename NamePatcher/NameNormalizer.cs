@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Text.RegularExpressions;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
 
 namespace NamePatcher
 {
     class NameNormalizer
     {
+        private static readonly Regex FilterRegex = new Regex(@"^[a-zA-Z0-9\._<>\$`\-\[\],]*$", RegexOptions.Compiled);
+
         public static void CheckType(TypeDefinition tdef)
         {
             CheckNames(tdef);
@@ -86,6 +85,7 @@ namespace NamePatcher
         {
             //String newTName = makeValidName(getName(tdef));
             //if (newTName != null)
+            //Console.WriteLine(getName(tdef) + " - " + nameIsObfuscated(getName(tdef)));
 			if (nameIsObfuscated(getName(tdef)))
             {
                 setName(tdef, "" + (tdef.IsClass ? "cl" : "tp") + String.Format("{0:x4}", classid)/*newTName*/);//tdef.Name = (tdef.IsClass ? "cl" : "tp") + newTName;
@@ -296,9 +296,9 @@ namespace NamePatcher
         }
 		static bool nameIsObfuscated(String origName)
 		{
-			if (origName == null || origName.Length == 0)
+			if (string.IsNullOrEmpty(origName))
 				return true;
-			if (origName[0] >= '0' && origName[0] <= '9')
+			if (origName[0] >= '0' && origName[0] <= '9' || origName[0] == '=' || origName.Contains("\""))
 				return true;
 			bool hasOnlyUppercaseLetters = true;
 			bool ret = (origName.Length == 5);
@@ -323,6 +323,8 @@ namespace NamePatcher
 					ret = false;
 				}
 			}
+			if (!ret && !FilterRegex.IsMatch(origName))
+				Console.WriteLine(origName);
 			return ret || (hasOnlyUppercaseLetters && origName.Length < 5);
 		}
         /*static String makeValidName(String origName)

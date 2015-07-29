@@ -1,7 +1,4 @@
-using System;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
 
 namespace ManualDeobfuscator
 {
@@ -9,6 +6,24 @@ namespace ManualDeobfuscator
 	{
 		public static void applyManualPatches (ModuleDefinition mainModule)
 		{
+		    /*var itemBase = mainModule.GetType("ItemClassBlock").BaseType.Resolve();
+			RenameAction<TypeDefinition> ("ItemBase") (itemBase);
+
+            RenameAction<TypeDefinition>("BlockShape")(mainModule.GetType("BlockShapeCube").BaseType.Resolve());
+
+            RenameAction<TypeDefinition>("EntityFightable")(mainModule.GetType("EntityPlayer").BaseType.Resolve());
+
+            RenameAction<TypeDefinition>("EntityAnimal")(mainModule.GetType("EntityAnimalRabbit").BaseType.Resolve());
+
+            RenameAction<TypeDefinition>("EntityEnemy")(mainModule.GetType("EntityZombie").BaseType.Resolve());
+
+            OnElement ("EntityClass.explosionData", mainModule.GetType("EntityClass").Fields,
+			          field => field.Name.Equals("explosionData") && field.FieldType.Resolve().IsClass,
+			          field => {
+			                RenameAction<TypeDefinition> ("ExplosionData") (field.FieldType.Resolve());
+			                return true;
+		                });*/
+
 			OnElement ("ConnectionManager.connectedClients", mainModule.GetType ("ConnectionManager").Fields,
 			          field => HasType (field.FieldType, "ClientInfoCollection"),
 			          MakeFieldPublicAction, RenameAction<FieldDefinition> ("connectedClients"));

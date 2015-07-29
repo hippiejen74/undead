@@ -1,18 +1,10 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
+﻿Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Deobfuscate-Main", "Deobfuscate-Main\Deobfuscate-Main.csproj", "{21AD4599-042D-4614-B73A-8FDB5598033A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NamePatcher", "NamePatcher\NamePatcher.csproj", "{0084FC27-ACCA-415B-A387-706BE5BA077C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkPatcher", "NetworkPatcher\NetworkPatcher.csproj", "{506795AE-3B63-4276-9397-644E3F89384B}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{99580291-4DFD-4CCA-9CAD-7DA545E74F61}"
-	ProjectSection(SolutionItems) = preProject
-		Mono.Cecil.dll = Mono.Cecil.dll
-		Mono.Cecil.Rocks.dll = Mono.Cecil.Rocks.dll
-		Mono.Cecil license.txt = Mono.Cecil license.txt
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManualDeobfuscator", "ManualDeobfuscator\ManualDeobfuscator.csproj", "{E72C28C7-326C-4007-9762-86EE1475B6A6}"
 EndProject

@@ -2,9 +2,9 @@
 using DeobfuscateMain;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using System.IO;
 using System.Reflection;
 using System.Collections.Generic;
+using Mono.Cecil.Rocks;
 
 namespace CodeDeobfuscator
 {
@@ -19,25 +19,12 @@ namespace CodeDeobfuscator
 			Assembly assembly = Assembly.LoadFrom(assemblyPath);
 			return assembly;
 		}*/
-		private static readonly Dictionary<Code,Func<object,int>> loadIntegerCodes = new Dictionary<Code,Func<object,int>>()
-		{
-			{Code.Ldc_I4, operand => {return (int)operand;}},
-			{Code.Ldc_I4_S, operand => {return (int)(sbyte)operand;}},
-			{Code.Ldc_I4_0, operand => {return 0;}},
-			{Code.Ldc_I4_1, operand => {return 1;}},
-			{Code.Ldc_I4_2, operand => {return 2;}},
-			{Code.Ldc_I4_3, operand => {return 3;}},
-			{Code.Ldc_I4_4, operand => {return 4;}},
-			{Code.Ldc_I4_5, operand => {return 5;}},
-			{Code.Ldc_I4_6, operand => {return 6;}},
-			{Code.Ldc_I4_7, operand => {return 7;}},
-			{Code.Ldc_I4_8, operand => {return 8;}},
-		};
+
 		public static void Apply(ModuleDefinition module, Logger logger)
 		{
 			//AppDomain currentDomain = AppDomain.CurrentDomain;
 			//currentDomain.AssemblyResolve += new ResolveEventHandler(LoadFromSameFolder);
-			Assembly assembly = Assembly.LoadFrom(Deobfuscator.sourceAssemblyPath.path + Path.DirectorySeparatorChar + Deobfuscator.sourceAssemblyPath.filename);
+			Assembly assembly = Assembly.LoadFrom(Deobfuscator.sourceAssemblyPath);
 
 			Module target = assembly.GetModules()[0];
 			logger.KeyInfo("Looking for string decryption calls...");
@@ -50,13 +37,14 @@ namespace CodeDeobfuscator
 				if (mdef.HasBody)
 				{
 					Mono.Cecil.Cil.MethodBody mdefBody = mdef.Body;
+					mdefBody.SimplifyMacros();
 					for (int i = 0; i < (mdefBody.Instructions.Count-1); i++) {
 						Instruction instr1 = mdefBody.Instructions[i];
 						Instruction instr2 = mdefBody.Instructions[i+1];
-						if (loadIntegerCodes.ContainsKey(instr1.OpCode.Code) && 
+						if ((instr1.OpCode == OpCodes.Ldc_I4) &&
 							(instr2.OpCode == OpCodes.Call))
 						{
-							int key = loadIntegerCodes[instr1.OpCode.Code](instr1.Operand);//(int)instr1.Operand;
+							int key = (int)instr1.Operand;
 							MethodDefinition targetMethod = ((MethodReference)instr2.Operand).Resolve();
 							if (targetMethod != null && targetMethod.IsStatic &&
 								targetMethod.Parameters.Count == 1 && targetMethod.ReturnType.FullName.Equals("System.String") &&
@@ -87,11 +75,11 @@ namespace CodeDeobfuscator
 								catch (Exception e)
 								{
 									logger.Warning("Unable to decrypt " + targetMethod.Name + " (" + key + ") :\r\n" + e.ToString ());
-									continue;
 								}
 							}
 						}
 					}
+					mdefBody.OptimizeMacros();
 				}
 				if ((__i % (mdefs.Length/10)) == 0 && __i > 0)
 					logger.KeyInfo("Decrypted strings from method #" + (__i + 1) + ".");

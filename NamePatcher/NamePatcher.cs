@@ -1,23 +1,15 @@
-using System;
 using DeobfuscateMain;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
 
 namespace NamePatcher
 {
-	public class NamePatcher// : Patcher
+	public class NamePatcher : Patcher
 	{
-		public static string getName()
-		{
-			return "NameSimplifier";
-		}
-		public static string[] getAuthors()
-		{
-			return new string[]{ "DerPopo" };
-		}
+		public override string Name { get { return "NameSimplifier"; } }
+		public override string[] Authors { get { return new[] { "DerPopo" }; } }
 
 		internal static ModuleDefinition module;
-		public static void Patch(Logger logger, AssemblyDefinition asmCSharp, AssemblyDefinition __reserved)
+		public override void Patch(Logger logger, AssemblyDefinition asmCSharp, AssemblyDefinition __reserved)
 		{
 			module = asmCSharp.Modules[0];
 			foreach (ModuleDefinition mdef in asmCSharp.Modules)

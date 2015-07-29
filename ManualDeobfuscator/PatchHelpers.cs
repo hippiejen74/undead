@@ -30,7 +30,7 @@ namespace ManualDeobfuscator
 			}
 
 			string trName = tr.Name;
-			if (tr.IsGenericInstance) {
+			if (tr.IsGenericInstance && trName.IndexOf('`') != -1) {
 				trName = trName.Substring (0, trName.IndexOf ('`'));
 			}
 
@@ -183,6 +183,31 @@ namespace ManualDeobfuscator
 				Console.WriteLine(Logger.Level_ToString(level) + message);
 		}
 
+		public static IEnumerable<TypeDefinition> GetDerivedTypes(AssemblyDefinition assembly, TypeDefinition baseType)
+		{
+			foreach (var mdef in assembly.Modules)
+			{
+				foreach (var tdef in mdef.Types)
+				{
+					if (IsSubclassOf(tdef, baseType))
+					{
+						yield return tdef;
+					}
+				}
+			}
+		}
+
+		public static bool IsSubclassOf(TypeDefinition extendType, TypeDefinition baseType)
+		{
+			if (extendType == null || extendType.BaseType == null) return false;
+			extendType = extendType.BaseType.Resolve();
+			while (extendType != null)
+			{
+				if (extendType == baseType) return true;
+				extendType = extendType.BaseType != null ? extendType.BaseType.Resolve() : null;
+			}
+			return false;
+		}
 	}
 }
 

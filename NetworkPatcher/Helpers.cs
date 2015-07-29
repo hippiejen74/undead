@@ -1,6 +1,7 @@
 ﻿using System;
 using Mono.Cecil;
 using System.Collections.Generic;
+using Mono.Cecil.Cil;
 
 namespace NetworkPatcher
 {
@@ -90,7 +91,7 @@ namespace NetworkPatcher
 
 		public static bool isObfuscated(String name)
 		{
-			if (name == null || name.Length == 0)
+			if (string.IsNullOrEmpty(name))
 				return true;
 			if (name[0] >= '0' && name[0] <= '9')
 				return true;
@@ -139,6 +140,43 @@ namespace NetworkPatcher
 				return true;
 			return false;
 		}*/
+
+        public static IEnumerable<TypeDefinition> GetTypes(AssemblyDefinition assembly)
+	    {
+	        foreach (var mdef in assembly.Modules)
+			{
+			    foreach (var tdef in mdef.Types)
+			    {
+			        yield return tdef;
+			    }
+			}
+	    }
+
+        public static IEnumerable<TypeDefinition> GetDerivedTypes(AssemblyDefinition assembly, TypeDefinition baseType)
+        {
+            foreach (var mdef in assembly.Modules)
+            {
+                foreach (var tdef in mdef.Types)
+                {
+                    if (IsSubclassOf(tdef, baseType))
+                    {
+                        yield return tdef;
+                    }
+                }
+            }
+        }
+
+	    public static bool IsSubclassOf(TypeDefinition extendType, TypeDefinition baseType)
+	    {
+            if (extendType == null || extendType.BaseType == null) return false;
+	        extendType = extendType.BaseType.Resolve();
+            while (extendType != null)
+	        {
+	            if (extendType == baseType) return true;
+                extendType = extendType.BaseType != null ? extendType.BaseType.Resolve() : null;
+	        }
+	        return false;
+	    }
 	}
 }
 

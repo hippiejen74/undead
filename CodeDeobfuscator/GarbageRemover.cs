@@ -3,7 +3,6 @@ using DeobfuscateMain;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
-using System.IO;
 using System.Collections.Generic;
 
 namespace CodeDeobfuscator

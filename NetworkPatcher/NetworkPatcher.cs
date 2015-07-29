@@ -1,33 +1,25 @@
-using System;
 using DeobfuscateMain;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
-using System.Collections.Generic;
 
 namespace NetworkPatcher
 {
-	public class NetworkPatcher
+	public class NetworkPatcher : Patcher
 	{
-		public static string getName()
-		{
-			return "PacketOrNotRelatedStuffPatcher";
-		}
-		public static string[] getAuthors()
-		{
-			return new string[]{ "DerPopo", "Alloc", "KaXaK" };
-		}
+		public override string Name { get { return "PacketOrNotRelatedStuffPatcher"; } }
+		public override string[] Authors { get { return new[] { "Alloc", "DerPopo", "KaXaK" }; } }
 
-		static MethodDefinition cctorMDef = null;
-		static TypeDefinition packageTypeEnumDef = null;
 		public static int success = 0;
 		public static int error = 0;
 
-		public static void Patch(Logger logger, AssemblyDefinition asmCSharp, AssemblyDefinition __reserved)
+		public override void Patch(Logger logger, AssemblyDefinition asmCSharp, AssemblyDefinition __reserved)
 		{
+			/*var found = asmCSharp.MainModule.GetTypes().Any(type => type.Fields.Any(fi => fi.IsLiteral && !fi.IsInitOnly && fi.Constant.ToString().Contains("7DTD")));
+			if (!found)
+			{
+				logger.Log(Logger.Level.KEYINFO, "Couldn't find 7DTD, skipping...");
+				return;
+			}*/
 			PatchMisc.Patch(logger, asmCSharp);
-			//logger.Log(Logger.Level.KEYINFO, String.Format("Successful: {0} / Failed: {1}", success, error));
 		}
 	}
 }
-
