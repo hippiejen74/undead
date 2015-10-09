@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using System.Linq;
+using System.Text;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 
 namespace NamePatcher
 {
     class NameNormalizer
     {
-        private static readonly Regex FilterRegex = new Regex(@"^[a-zA-Z0-9\._<>\$`\-\[\],]*$", RegexOptions.Compiled);
-
         public static void CheckType(TypeDefinition tdef)
         {
             CheckNames(tdef);
@@ -85,7 +86,6 @@ namespace NamePatcher
         {
             //String newTName = makeValidName(getName(tdef));
             //if (newTName != null)
-            //Console.WriteLine(getName(tdef) + " - " + nameIsObfuscated(getName(tdef)));
 			if (nameIsObfuscated(getName(tdef)))
             {
                 setName(tdef, "" + (tdef.IsClass ? "cl" : "tp") + String.Format("{0:x4}", classid)/*newTName*/);//tdef.Name = (tdef.IsClass ? "cl" : "tp") + newTName;
@@ -102,32 +102,31 @@ namespace NamePatcher
                 if (tdef.HasNestedTypes)
                     cmid += checkLocalDefinitions<TypeDefinition>(tdef.NestedTypes, "scl", cmid, tdef);
             }
-            catch (Exception e) { throw new Exception("occured while patching 1", e); }
+			catch (Exception e) { throw new Exception("occured while patching types", e); }
             try
             {
                 if (tdef.HasMethods)
                     checkLocalDefinitions<MethodDefinition>(tdef.Methods, "md", 0, tdef);
             }
-            catch (Exception e) { throw new Exception("occured while patching 2", e); }
+            catch (Exception e) { throw new Exception("occured while patching methods", e); }
             try
             {
                 if (tdef.HasFields)
                     checkLocalDefinitions<FieldDefinition>(tdef.Fields, "fd", 0, tdef);
             }
-            catch (Exception e) { throw new Exception("occured while patching 3", e); }
+			catch (Exception e) { throw new Exception("occured while patching fields", e); }
             try
             {
                 if (tdef.HasEvents)
                     checkLocalDefinitions<EventDefinition>(tdef.Events, "event", 0, tdef);
             }
-            catch (Exception e) { throw new Exception("occured while patching 4", e); }
-            try
-            {
-                if (tdef.HasProperties)
-                    checkLocalDefinitions<PropertyDefinition>(tdef.Properties, "prop", 0, tdef);
-            }
-            catch (Exception e) { throw new Exception("occured while patching 5", e); }
-
+			catch (Exception e) { throw new Exception("occured while patching events", e); }
+			try
+			{
+				if (tdef.HasProperties)
+					checkLocalDefinitions<PropertyDefinition>(tdef.Properties, "prop", 0, tdef);
+			}
+			catch (Exception e) { throw new Exception("occured while patching properties", e); }
         }
         static void checkLocalDefinition<T>(T def, string prefix, int cmid, TypeDefinition btdef) where T : IMemberDefinition
         {
@@ -238,6 +237,38 @@ namespace NamePatcher
 				if (fdef.DeclaringType.GenericParameters.Count != 0)
 					needsNewName = false;
 			}
+			else if (typeof(T) == typeof(PropertyDefinition))
+			{
+				PropertyDefinition pdef = def as PropertyDefinition;
+				MethodDefinition getter = pdef.GetMethod;
+				MethodDefinition setter = pdef.SetMethod;
+				if (needsNewName)
+				{
+					//try to correct the property name using a getter/setter method
+					if (getter != null && getter.Name.StartsWith("get_") && !nameIsObfuscated(getter.Name))
+					{
+						setName(def, getter.Name.Substring(4));
+						needsNewName = false;
+					}
+					else if (setter != null && setter.Name.StartsWith("set_") && !nameIsObfuscated(setter.Name))
+					{
+						setName(def, setter.Name.Substring(4));
+						needsNewName = false;
+					}
+				}
+				else
+				{
+					//try to correct the getter/setter name using the property name (simplifies reusing a previously compiled mod dll for new 7dtd versions) 
+					if (getter != null && nameIsObfuscated(getter.Name))
+					{
+						setName(getter, "get_" + pdef.Name);
+					}
+					else if (setter != null && nameIsObfuscated(setter.Name))
+					{
+						setName(setter, "set_" + pdef.Name);
+					}
+				}
+			}
             //newName = (newName == null ? null : String.Format("{0}{1:x4}", prefix, cmid));
             //if (newName != null)
 			if (needsNewName)
@@ -250,12 +281,6 @@ namespace NamePatcher
                 TypeDefinition tdef = def as TypeDefinition;
                 if (!tdef.IsEnum)
                     CheckNames(tdef);
-            }
-            if (typeof(T) == typeof(PropertyDefinition))
-            {
-                PropertyDefinition pdef = def as PropertyDefinition;
-                MethodDefinition getter = pdef.GetMethod;
-                MethodDefinition setter = pdef.SetMethod;
             }
         }
         static int checkLocalDefinitions<T>(Mono.Collections.Generic.Collection<T> memDef, string prefix, int cmid, TypeDefinition btdef)
@@ -296,9 +321,9 @@ namespace NamePatcher
         }
 		static bool nameIsObfuscated(String origName)
 		{
-			if (string.IsNullOrEmpty(origName))
+			if (String.IsNullOrEmpty(origName))
 				return true;
-			if (origName[0] >= '0' && origName[0] <= '9' || origName[0] == '=' || origName.Contains("\""))
+			if (origName[0] >= '0' && origName[0] <= '9')
 				return true;
 			bool hasOnlyUppercaseLetters = true;
 			bool ret = (origName.Length == 5);
@@ -323,8 +348,6 @@ namespace NamePatcher
 					ret = false;
 				}
 			}
-			if (!ret && !FilterRegex.IsMatch(origName))
-				Console.WriteLine(origName);
 			return ret || (hasOnlyUppercaseLetters && origName.Length < 5);
 		}
         /*static String makeValidName(String origName)
