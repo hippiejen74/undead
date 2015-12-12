@@ -1,3 +1,4 @@
+using System.Linq;
 using Mono.Cecil;
 
 namespace ManualDeobfuscator
@@ -29,8 +30,16 @@ namespace ManualDeobfuscator
 			          MakeFieldPublicAction, RenameAction<FieldDefinition> ("connectedClients"));
 
 			OnElement ("ClientInfoCollection.clientsByEntityId", mainModule.GetType ("ClientInfoCollection").Fields,
-				field => HasType (field.FieldType, "System.Collections.Generic.Dictionary") && HasGenericParams (field.FieldType, "System.Int32", "ClientInfo"),
+				field => HasType (field.FieldType, "System.Collections.Generic.Dictionary")
+				&& HasGenericParams (field.FieldType, "System.Int32", "ClientInfo")
+				&& field.DeclaringType.Methods.FirstOrDefault(m => m.Name.Equals("ByEntityId")).Body.Instructions.Any(i => i.Operand == field ),
 				MakeFieldPublicAction, RenameAction<FieldDefinition> ("clientsByEntityId"));
+
+			OnElement("ClientInfoCollection.clientsByUnetConnectionId", mainModule.GetType("ClientInfoCollection").Fields,
+				field => HasType(field.FieldType, "System.Collections.Generic.Dictionary")
+				&& HasGenericParams(field.FieldType, "System.Int32", "ClientInfo")
+				&& field.DeclaringType.Methods.FirstOrDefault(m => m.Name.Equals("ByUnetConnectionId")).Body.Instructions.Any(i => i.Operand == field),
+				MakeFieldPublicAction, RenameAction<FieldDefinition>("clientsByUnetConnectionId"));
 
 			OnElement ("ClientInfoCollection.clientsBySteamId", mainModule.GetType ("ClientInfoCollection").Fields,
 				field => HasType (field.FieldType, "System.Collections.Generic.Dictionary") && HasGenericParams (field.FieldType, "Steamworks.CSteamID", "ClientInfo"),
