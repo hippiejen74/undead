@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
 
 namespace NamePatcher
 {
@@ -258,7 +254,7 @@ namespace NamePatcher
 				}
 				else
 				{
-					//try to correct the getter/setter name using the property name (simplifies reusing a previously compiled mod dll for new 7dtd versions) 
+					//try to correct the getter/setter name using the property name (simplifies reusing a previously compiled mod dll for new 7dtd versions)
 					if (getter != null && nameIsObfuscated(getter.Name))
 					{
 						setName(getter, "get_" + pdef.Name);
